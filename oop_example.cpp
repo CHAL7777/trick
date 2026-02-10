@@ -72,6 +72,9 @@ class BankAccount {
   static std::string current_timestamp() {
     const auto now = std::chrono::system_clock::now();
     const std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+    const auto ms_since_epoch =
+        std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
+    const long long millis = ms_since_epoch.count() % 1000;
     std::tm local_time{};
 #if defined(_WIN32)
     localtime_s(&local_time, &now_time);
@@ -79,7 +82,8 @@ class BankAccount {
     localtime_r(&now_time, &local_time);
 #endif
     std::ostringstream out;
-    out << std::put_time(&local_time, "%Y-%m-%d %H:%M:%S");
+    out << std::put_time(&local_time, "%Y-%m-%d %H:%M:%S")
+        << '.' << std::setw(3) << std::setfill('0') << millis;
     return out.str();
   }
 
