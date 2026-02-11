@@ -1,8 +1,6 @@
-# TODO for Best Recursive Merge Sort Algorithm
+# TODO for Pancake Sort Algorithm
 
-- [x] Wrote optimized recursive mergeSort and merge functions in `rec` (C++, vector-based)
-- [x] Test compilation: g++ rec -o test_rec (successful)
-- [x] Verify algorithm logic with sample manual test (standard implementation, logic correct)
-- [ ] Update this TODO.md with completion
-- [ ] attempt_completion
-
+- [ ] Wrote pancake_sort.cpp (C++, vector-based)
+- [ ] Test compilation: g++ pancake_sort.cpp -o test_pancake (run to verify)
+- [ ] Verify algorithm logic with sample input
+- [x] attempt_completion
