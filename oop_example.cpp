@@ -37,6 +37,21 @@ class BankAccount {
     return true;
   }
 
+  bool transfer_to(BankAccount& target, double amount, std::string note = "") {
+    if (this == &target) {
+      return false;
+    }
+    if (!withdraw(amount, note.empty() ? "Transfer to " + target.account_number()
+                                       : "Transfer to " + target.account_number()
+                                           + " (" + note + ")")) {
+      return false;
+    }
+    target.deposit(amount, note.empty() ? "Transfer from " + account_number_
+                                        : "Transfer from " + account_number_
+                                            + " (" + note + ")");
+    return true;
+  }
+
   struct Transaction {
     std::string type;
     double amount;
@@ -116,6 +131,8 @@ int main() {
 
   checking.deposit(250.0, "Side job");
   checking.withdraw(800.0, "Rent");
+
+  checking.transfer_to(savings, 200.0, "Monthly savings");
 
   std::cout << savings.owner() << " (" << savings.account_number()
             << ") balance: " << savings.balance() << '\n';
