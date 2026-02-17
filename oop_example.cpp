@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <utility>
+#include <vector>
 
 class BankAccount {
  public:
@@ -21,25 +22,43 @@ class BankAccount {
     return balance_;
   }
 
-  void deposit(double amount) {
+  void deposit(double amount, std::string note = "") {
     if (amount <= 0.0) {
       return;
     }
-    balance_ += amount;
+    apply_transaction("Deposit", amount, std::move(note));
   }
 
-  bool withdraw(double amount) {
+  virtual bool withdraw(double amount, std::string note = "") {
     if (amount <= 0.0 || amount > balance_) {
       return false;
     }
-    balance_ -= amount;
+    apply_transaction("Withdraw", -amount, std::move(note));
     return true;
+  }
+
+  struct Transaction {
+    std::string type;
+    double amount;
+    double balance;
+    std::string note;
+  };
+
+  const std::vector<Transaction>& history() const {
+    return history_;
+  }
+
+ protected:
+  void apply_transaction(std::string type, double delta, std::string note) {
+    balance_ += delta;
+    history_.push_back(Transaction{std::move(type), delta, balance_, std::move(note)});
   }
 
  private:
   std::string owner_;
   std::string account_number_;
   double balance_;
+  std::vector<Transaction> history_;
 };
 
 class SavingsAccount final : public BankAccount {
@@ -56,7 +75,7 @@ class SavingsAccount final : public BankAccount {
       return;
     }
     const double interest = balance() * interest_rate_;
-    deposit(interest);
+    deposit(interest, "Interest");
   }
 
  private:
@@ -72,11 +91,14 @@ class CheckingAccount final : public BankAccount {
       : BankAccount(std::move(owner), std::move(account_number), balance),
         overdraft_limit_(overdraft_limit) {}
 
-  bool withdraw(double amount) {
+  bool withdraw(double amount, std::string note = "") override {
     if (amount <= 0.0 || amount > balance() + overdraft_limit_) {
       return false;
     }
-    deposit(-amount);
+    if (note.empty() && amount > balance()) {
+      note = "Overdraft";
+    }
+    apply_transaction("Withdraw", -amount, std::move(note));
     return true;
   }
 
@@ -88,17 +110,34 @@ int main() {
   SavingsAccount savings("Amina Issa", "SA-0142", 1200.0, 0.03);
   CheckingAccount checking("Daniel Reed", "CA-7765", 500.0, 200.0);
 
-  savings.deposit(300.0);
+  savings.deposit(300.0, "Paycheck");
   savings.apply_interest();
-  savings.withdraw(150.0);
+  savings.withdraw(150.0, "Groceries");
 
-  checking.deposit(250.0);
-  checking.withdraw(800.0);
+  checking.deposit(250.0, "Side job");
+  checking.withdraw(800.0, "Rent");
 
   std::cout << savings.owner() << " (" << savings.account_number()
             << ") balance: " << savings.balance() << '\n';
   std::cout << checking.owner() << " (" << checking.account_number()
             << ") balance: " << checking.balance() << '\n';
+
+  auto print_history = [](const BankAccount& account) {
+    std::cout << "\nTransaction history for " << account.owner()
+              << " (" << account.account_number() << ")\n";
+    for (const auto& entry : account.history()) {
+      std::cout << "  " << entry.type << " "
+                << entry.amount << " -> balance "
+                << entry.balance;
+      if (!entry.note.empty()) {
+        std::cout << " (" << entry.note << ")";
+      }
+      std::cout << '\n';
+    }
+  };
+
+  print_history(savings);
+  print_history(checking);
 
   return 0;
 }
