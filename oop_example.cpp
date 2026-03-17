@@ -1,4 +1,8 @@
+#include <chrono>
+#include <ctime>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -56,6 +60,7 @@ class BankAccount {
     std::string type;
     double amount;
     double balance;
+    std::string timestamp;
     std::string note;
   };
 
@@ -64,9 +69,24 @@ class BankAccount {
   }
 
  protected:
+  static std::string current_timestamp() {
+    const auto now = std::chrono::system_clock::now();
+    const std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+    std::tm local_time{};
+#if defined(_WIN32)
+    localtime_s(&local_time, &now_time);
+#else
+    localtime_r(&now_time, &local_time);
+#endif
+    std::ostringstream out;
+    out << std::put_time(&local_time, "%Y-%m-%d %H:%M:%S");
+    return out.str();
+  }
+
   void apply_transaction(std::string type, double delta, std::string note) {
     balance_ += delta;
-    history_.push_back(Transaction{std::move(type), delta, balance_, std::move(note)});
+    history_.push_back(
+        Transaction{std::move(type), delta, balance_, current_timestamp(), std::move(note)});
   }
 
  private:
@@ -143,7 +163,8 @@ int main() {
     std::cout << "\nTransaction history for " << account.owner()
               << " (" << account.account_number() << ")\n";
     for (const auto& entry : account.history()) {
-      std::cout << "  " << entry.type << " "
+      std::cout << "  [" << entry.timestamp << "] "
+                << entry.type << " "
                 << entry.amount << " -> balance "
                 << entry.balance;
       if (!entry.note.empty()) {
