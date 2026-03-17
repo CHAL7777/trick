@@ -1,19 +1,11 @@
-#!/bin/bash
-
-dates=(
-"2025-07-23"
-"2025-08-18"
-"2025-08-19"
-"2025-08-20"
-)
-
-for date in "${dates[@]}"
+for i in {1..30}
 do
-  echo "update $date" >> README.md
-  
-  GIT_AUTHOR_DATE="$date T12:00:00" \
-  GIT_COMMITTER_DATE="$date T12:00:00" \
-  git add . && git commit -m "commit for $date"
+  DATE=$(date -d "2025-08-01 +$i days" +"%Y-%m-%d")
+  echo "auto $DATE" >> README.md
+
+  GIT_AUTHOR_DATE="$DATE T12:00:00" \
+  GIT_COMMITTER_DATE="$DATE T12:00:00" \
+  git add . && git commit -m "auto commit $DATE"
 done
 
 git push
