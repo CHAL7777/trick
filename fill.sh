@@ -1,11 +1,32 @@
-for i in {1..30}
-do
-  DATE=$(date -d "2025-08-01 +$i days" +"%Y-%m-%d")
-  echo "auto $DATE" >> README.md
+#!/bin/bash
 
-  GIT_AUTHOR_DATE="$DATE T12:00:00" \
-  GIT_COMMITTER_DATE="$DATE T12:00:00" \
-  git add . && git commit -m "auto commit $DATE"
+# List your 13 dates here (YYYY-MM-DD)
+dates=(
+"2025-07-23"
+"2025-08-01"
+"2025-08-02"
+"2025-08-03"
+"2025-08-04"
+"2025-08-05"
+"2025-08-10"
+"2025-08-12"
+"2025-08-15"
+"2025-08-18"
+"2025-08-20"
+"2025-08-22"
+"2025-08-25"
+)
+
+for date in "${dates[@]}"
+do
+  # Add a small change
+  echo "update for $date" >> README.md
+  
+  # Backdate commit
+  GIT_AUTHOR_DATE="${date}T12:00:00" \
+  GIT_COMMITTER_DATE="${date}T12:00:00" \
+  git add . && git commit -m "commit for $date"
 done
 
+# Push all commits at once
 git push
