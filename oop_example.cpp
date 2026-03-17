@@ -1,57 +1,104 @@
 #include <iostream>
-#include <memory>
 #include <string>
-#include <vector>
+#include <utility>
 
-class Shape {
+class BankAccount {
  public:
-  explicit Shape(std::string name) : name_(std::move(name)) {}
-  virtual ~Shape() = default;
+  BankAccount(std::string owner, std::string account_number, double balance)
+      : owner_(std::move(owner)),
+        account_number_(std::move(account_number)),
+        balance_(balance) {}
 
-  const std::string& name() const {
-    return name_;
+  const std::string& owner() const {
+    return owner_;
   }
 
-  virtual double area() const = 0;
+  const std::string& account_number() const {
+    return account_number_;
+  }
+
+  double balance() const {
+    return balance_;
+  }
+
+  void deposit(double amount) {
+    if (amount <= 0.0) {
+      return;
+    }
+    balance_ += amount;
+  }
+
+  bool withdraw(double amount) {
+    if (amount <= 0.0 || amount > balance_) {
+      return false;
+    }
+    balance_ -= amount;
+    return true;
+  }
 
  private:
-  std::string name_;
+  std::string owner_;
+  std::string account_number_;
+  double balance_;
 };
 
-class Rectangle final : public Shape {
+class SavingsAccount final : public BankAccount {
  public:
-  Rectangle(double width, double height)
-      : Shape("Rectangle"), width_(width), height_(height) {}
+  SavingsAccount(std::string owner,
+                 std::string account_number,
+                 double balance,
+                 double interest_rate)
+      : BankAccount(std::move(owner), std::move(account_number), balance),
+        interest_rate_(interest_rate) {}
 
-  double area() const override {
-    return width_ * height_;
+  void apply_interest() {
+    if (interest_rate_ <= 0.0) {
+      return;
+    }
+    const double interest = balance() * interest_rate_;
+    deposit(interest);
   }
 
  private:
-  double width_;
-  double height_;
+  double interest_rate_;
 };
 
-class Circle final : public Shape {
+class CheckingAccount final : public BankAccount {
  public:
-  explicit Circle(double radius) : Shape("Circle"), radius_(radius) {}
+  CheckingAccount(std::string owner,
+                  std::string account_number,
+                  double balance,
+                  double overdraft_limit)
+      : BankAccount(std::move(owner), std::move(account_number), balance),
+        overdraft_limit_(overdraft_limit) {}
 
-  double area() const override {
-    return 3.141592653589793 * radius_ * radius_;
+  bool withdraw(double amount) {
+    if (amount <= 0.0 || amount > balance() + overdraft_limit_) {
+      return false;
+    }
+    deposit(-amount);
+    return true;
   }
 
  private:
-  double radius_;
+  double overdraft_limit_;
 };
 
 int main() {
-  std::vector<std::unique_ptr<Shape>> shapes;
-  shapes.emplace_back(std::make_unique<Rectangle>(4.0, 5.0));
-  shapes.emplace_back(std::make_unique<Circle>(3.0));
+  SavingsAccount savings("Amina Issa", "SA-0142", 1200.0, 0.03);
+  CheckingAccount checking("Daniel Reed", "CA-7765", 500.0, 200.0);
 
-  for (const auto& shape : shapes) {
-    std::cout << shape->name() << " area: " << shape->area() << '\n';
-  }
+  savings.deposit(300.0);
+  savings.apply_interest();
+  savings.withdraw(150.0);
+
+  checking.deposit(250.0);
+  checking.withdraw(800.0);
+
+  std::cout << savings.owner() << " (" << savings.account_number()
+            << ") balance: " << savings.balance() << '\n';
+  std::cout << checking.owner() << " (" << checking.account_number()
+            << ") balance: " << checking.balance() << '\n';
 
   return 0;
 }
